@@ -8,7 +8,7 @@ body = json.dumps({
     "amount_minor": 2500,
     "fiat_currency": "USD",
     "expires_in_seconds": 1800,
-    "description": "Order #1001",
+    "description": "Order 1001",
     "metadata": {"order_id": "1001"},
 }).encode()
 
@@ -20,7 +20,9 @@ request = urllib.request.Request(
         "X-Voybit-Api-Key": os.environ["VOYBIT_API_KEY"],
         "Idempotency-Key": "order:1001:attempt:1",
         "Content-Type": "application/json",
+        "Accept": "application/json",
     },
 )
 with urllib.request.urlopen(request, timeout=20) as response:
-    print(response.status, response.read().decode())
+    payment = json.load(response)
+print(payment["id"], payment["status"], payment["checkout_url"])

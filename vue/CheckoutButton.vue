@@ -9,12 +9,11 @@ const props = defineProps({
 const loading = ref(false)
 const errorMessage = ref('')
 
-async function startCryptoCheckout() {
+async function startCheckout() {
   if (loading.value) return
   loading.value = true
   errorMessage.value = ''
   try {
-    // Call your own server. The Voybit API key never belongs in this file.
     const response = await fetch('/api/checkout/crypto', {
       method: 'POST',
       credentials: 'same-origin',
@@ -26,11 +25,11 @@ async function startCryptoCheckout() {
     })
     const body = await response.json().catch(() => ({}))
     if (!response.ok || typeof body.checkout_url !== 'string') {
-      throw new Error(body?.error?.message || 'Could not start crypto checkout')
+      throw new Error(body?.error?.message || 'Checkout could not be started')
     }
     window.location.assign(body.checkout_url)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Could not start crypto checkout'
+    errorMessage.value = error instanceof Error ? error.message : 'Checkout could not be started'
   } finally {
     loading.value = false
   }
@@ -38,8 +37,8 @@ async function startCryptoCheckout() {
 </script>
 
 <template>
-  <button type="button" :disabled="loading" @click="startCryptoCheckout">
-    {{ loading ? 'Opening secure checkout…' : 'Pay with crypto' }}
+  <button type="button" :disabled="loading" @click="startCheckout">
+    {{ loading ? 'Opening checkout…' : 'Pay' }}
   </button>
   <p v-if="errorMessage" role="alert">{{ errorMessage }}</p>
 </template>

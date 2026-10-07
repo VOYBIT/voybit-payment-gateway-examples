@@ -14,31 +14,30 @@ import (
 
 func main() {
 	http.HandleFunc("/webhooks/voybit", func(w http.ResponseWriter, r *http.Request) {
-		raw, _ := io.ReadAll(http.MaxBytesReader(w, r.Body, 1<<20))
-		id := r.Header.Get("Voybit-Webhook-Id")
-		timestamp := r.Header.Get("Voybit-Webhook-Timestamp")
-		signature := r.Header.Get("Voybit-Webhook-Signature")
-		seconds, err := strconv.ParseInt(timestamp, 10, 64)
-		supplied, hexErr := hex.DecodeString(strings.TrimPrefix(signature, "v1="))
-		if err != nil || hexErr != nil || !strings.HasPrefix(signature, "v1=") || len(supplied) != sha256.Size || abs(time.Now().Unix()-seconds) > 300 {
-			http.Error(w, "invalid signature", http.StatusUnauthorized)
-			return
-		}
-		mac := hmac.New(sha256.New, []byte(os.Getenv("VOYBIT_WEBHOOK_SECRET")))
-		mac.Write([]byte(id + "." + timestamp + "."))
-		mac.Write(raw)
-		if !hmac.Equal(mac.Sum(nil), supplied) {
+		raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 1<<20))
+		if err != nil || !valid(os.Getenv("VOYBIT_WEBHOOK_SECRET"), r.Header.Get("Voybit-Webhook-Id"), r.Header.Get("Voybit-Webhook-Timestamp"), r.Header.Get("Voybit-Webhook-Signature"), raw) {
 			http.Error(w, "invalid signature", http.StatusUnauthorized)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
-	_ = http.ListenAndServe(":8080", nil)
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		panic(err)
+	}
 }
 
-func abs(value int64) int64 {
-	if value < 0 {
-		return -value
+func valid(secret, id, timestamp, signature string, raw []byte) bool {
+	hexSignature := strings.TrimPrefix(signature, "v1=")
+	seconds, err := strconv.ParseInt(timestamp, 10, 64)
+	supplied, hexErr := hex.DecodeString(hexSignature)
+	if secret == "" || id == "" || err != nil || hexErr != nil || !strings.HasPrefix(signature, "v1=") || len(hexSignature) != sha256.Size*2 || len(supplied) != sha256.Size {
+		return false
 	}
-	return value
+	if age := time.Now().Unix() - seconds; age > 300 || age < -300 {
+		return false
+	}
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = mac.Write([]byte(id + "." + timestamp + "."))
+	_, _ = mac.Write(raw)
+	return hmac.Equal(mac.Sum(nil), supplied)
 }

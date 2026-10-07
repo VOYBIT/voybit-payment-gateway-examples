@@ -1,6 +1,5 @@
 import hashlib
 import hmac
-import json
 import os
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -13,16 +12,24 @@ class Handler(BaseHTTPRequestHandler):
         delivery_id = self.headers.get("Voybit-Webhook-Id", "")
         timestamp = self.headers.get("Voybit-Webhook-Timestamp", "")
         signature = self.headers.get("Voybit-Webhook-Signature", "")
-        supplied = bytes.fromhex(signature.removeprefix("v1=")) if signature.startswith("v1=") else b""
-        seconds = int(timestamp) if timestamp.isdigit() else 0
-        signed = f"{delivery_id}.{timestamp}.".encode() + raw
-        expected = hmac.new(os.environ["VOYBIT_WEBHOOK_SECRET"].encode(), signed, hashlib.sha256).digest()
-        fresh = abs(int(time.time()) - seconds) <= 300
-        valid = signature.startswith("v1=") and fresh and hmac.compare_digest(expected, supplied)
-        if valid:
-            json.loads(raw)
+        hex_signature = signature[3:] if signature.startswith("v1=") else ""
+        seconds = int(timestamp) if timestamp.isdigit() else None
+        fresh = seconds is not None and abs(int(time.time()) - seconds) <= 300
+        expected = hmac.new(
+            os.environ["VOYBIT_WEBHOOK_SECRET"].encode(),
+            f"{delivery_id}.{timestamp}.".encode() + raw,
+            hashlib.sha256,
+        ).digest()
+        try:
+            supplied = bytes.fromhex(hex_signature) if len(hex_signature) == 64 else b""
+        except ValueError:
+            supplied = b""
+        valid = fresh and len(supplied) == len(expected) and hmac.compare_digest(expected, supplied)
         self.send_response(204 if valid else 401)
         self.end_headers()
+
+    def log_message(self, format, *args):
+        return
 
 
 if __name__ == "__main__":
