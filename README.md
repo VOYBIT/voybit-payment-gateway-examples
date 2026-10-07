@@ -16,6 +16,10 @@ Libraries:
 - [Flutter](https://github.com/VOYBIT/voybit-payment-gateway-flutter)
 - [React Native](https://github.com/VOYBIT/voybit-payment-gateway-react-native)
 - [React](https://github.com/VOYBIT/voybit-payment-gateway-react)
+- [Laravel](https://github.com/VOYBIT/voybit-payment-gateway-laravel)
+- [Django](https://github.com/VOYBIT/voybit-payment-gateway-django)
+
+`next/`, `nuxt/`, and `fastapi/` call the Node.js or Python library from server routes. `vue/` only sends the payer to `checkout_url`.
 
 `POST https://api.voybit.com/api/v1/gateway/payments` with `X-Voybit-Api-Key` and `Idempotency-Key`.
 
