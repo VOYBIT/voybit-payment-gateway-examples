@@ -3,7 +3,6 @@ import { ref } from 'vue'
 
 const props = defineProps({
   orderId: { type: String, required: true },
-  assetId: { type: String, required: true },
 })
 
 const loading = ref(false)
@@ -20,7 +19,6 @@ async function startCheckout() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         order_id: props.orderId,
-        asset_id: props.assetId,
       }),
     })
     const body = await response.json().catch(() => ({}))

@@ -1,4 +1,4 @@
-const response = await fetch('https://api.voybit.com/api/v1/gateway/payments', {
+const response = await fetch('https://api.voybit.com/api/v1/gateway/checkout-sessions', {
   method: 'POST',
   redirect: 'error',
   headers: {
@@ -8,19 +8,17 @@ const response = await fetch('https://api.voybit.com/api/v1/gateway/payments', {
     Accept: 'application/json',
   },
   body: JSON.stringify({
-    asset_id: process.env.VOYBIT_ASSET_ID,
-    crypto_amount: '25.0000',
-    amount_minor: 2500,
+    fiat_amount: '25.00',
     fiat_currency: 'USD',
-    expires_in_seconds: 1800,
+    payment_window_seconds: 1800,
     description: 'Order 1001',
     metadata: { order_id: '1001' },
   }),
 })
 
-const payment = await response.json()
+const session = await response.json()
 if (!response.ok) {
-  console.error(response.status, payment?.error?.code || 'request_failed')
+  console.error(response.status, session?.error?.code || 'request_failed')
   process.exit(1)
 }
-console.log(payment.id, payment.status, payment.checkout_url)
+console.log(session.session_id, session.status, session.checkout_url)

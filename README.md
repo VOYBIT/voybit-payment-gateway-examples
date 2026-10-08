@@ -3,7 +3,7 @@
 ## Get an API key
 
 1. Create an account at [dashboard.voybit.com](https://dashboard.voybit.com).
-2. Open **Gateways** and create a payment gateway. Keep it enabled. Copy the asset ID you will charge, and store the webhook secret (`whsec_…`) shown once at creation as `VOYBIT_WEBHOOK_SECRET`.
+2. Open **Gateways**, create a payment gateway, and enable every asset and network customers may choose. Store the webhook secret (`whsec_…`) as `VOYBIT_WEBHOOK_SECRET`.
 3. Open **API keys**, choose **Create secret key**, and bind it to that gateway. Copy the full `vb_live_…` value once and store it as `VOYBIT_API_KEY` on your server.
 
 Browser and mobile samples never receive that key. They only open `checkout_url`.
@@ -29,8 +29,8 @@ Libraries:
 
 `next/`, `nuxt/`, and `fastapi/` call the Node.js or Python library from server routes. `vue/` only sends the payer to `checkout_url`.
 
-`POST https://api.voybit.com/api/v1/gateway/payments` with `X-Voybit-Api-Key` and `Idempotency-Key`.
+`POST https://api.voybit.com/api/v1/gateway/checkout-sessions` with `X-Voybit-Api-Key` and `Idempotency-Key`.
 
-Required body fields: `asset_id`, `crypto_amount` (decimal string), `amount_minor`, `fiat_currency`. Optional: `gateway_id`, `expires_in_seconds` (300–86400), `description`, `metadata`.
+Required body fields: `fiat_amount` (positive decimal string) and `fiat_currency` (`USD`, `EUR`, or `GBP`). Optional: `payment_window_seconds` (300–86400), `description`, and `metadata`.
 
-Send the payer to `checkout_url`. Fulfil only when the webhook status is `paid` or `overpaid`. Verify `Voybit-Webhook-Signature` against the raw body before parsing, and ignore a repeated `Voybit-Webhook-Id`.
+Send the payer to `checkout_url`. Voybit shows only the assets enabled on that gateway, quotes the payer’s selection, and creates the address and QR after confirmation. Fulfil only when the webhook status is `paid` or `overpaid`. Verify `Voybit-Webhook-Signature` against the raw body before parsing, and ignore a repeated `Voybit-Webhook-Id`.

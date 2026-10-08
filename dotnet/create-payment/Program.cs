@@ -4,14 +4,12 @@ using System.Text.Json;
 
 using var handler = new SocketsHttpHandler { AllowAutoRedirect = false };
 using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(20) };
-using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.voybit.com/api/v1/gateway/payments");
+using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.voybit.com/api/v1/gateway/checkout-sessions");
 var json = JsonSerializer.Serialize(new
 {
-    asset_id = Environment.GetEnvironmentVariable("VOYBIT_ASSET_ID"),
-    crypto_amount = "25.0000",
-    amount_minor = 2500,
+    fiat_amount = "25.00",
     fiat_currency = "USD",
-    expires_in_seconds = 1800,
+    payment_window_seconds = 1800,
     description = "Order 1001",
     metadata = new { order_id = "1001" }
 });
@@ -29,5 +27,5 @@ if (!response.IsSuccessStatusCode)
     Console.Error.WriteLine($"HTTP {(int)response.StatusCode}");
     Environment.Exit(1);
 }
-using var payment = JsonDocument.Parse(body);
-Console.WriteLine($"{payment.RootElement.GetProperty("id").GetString()} {payment.RootElement.GetProperty("status").GetString()} {payment.RootElement.GetProperty("checkout_url").GetString()}");
+using var session = JsonDocument.Parse(body);
+Console.WriteLine($"{session.RootElement.GetProperty("session_id").GetString()} {session.RootElement.GetProperty("status").GetString()} {session.RootElement.GetProperty("checkout_url").GetString()}");
